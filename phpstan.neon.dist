@@ -1,0 +1,11 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - config
+        - database/migrations
+        - src
+    treatPhpDocTypesAsCertain: false
+    tmpDir: build/phpstan

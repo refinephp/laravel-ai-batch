@@ -1,0 +1,2 @@
+{"id":"batch_req_http_error","custom_id":"item-http-error","response":{"status_code":429,"request_id":"req_rate_limit","body":{"error":{"code":"rate_limit_exceeded","message":"Rate limit exceeded.","param":null,"type":"requests"}}},"error":null}
+{"id":"batch_req_expired","custom_id":"item-expired","response":null,"error":{"code":"batch_expired","message":"This request could not be executed before the completion window expired."}}

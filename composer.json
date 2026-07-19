@@ -1,0 +1,79 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "refinephp/laravel-ai-batch",
+    "description": "Provider-native asynchronous batch workflows for the Laravel AI SDK.",
+    "keywords": [
+        "ai",
+        "batch",
+        "laravel",
+        "openai"
+    ],
+    "homepage": "https://github.com/refinephp/laravel-ai-batch",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "RefinePHP"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/cache": "^12.0|^13.0",
+        "illuminate/console": "^12.0|^13.0",
+        "illuminate/config": "^12.0|^13.0",
+        "illuminate/container": "^12.0|^13.0",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/database": "^12.0|^13.0",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "laravel/ai": "0.9.1"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.24",
+        "mockery/mockery": "^1.6.12",
+        "orchestra/testbench": "^10.6|^11.0",
+        "pestphp/pest": "^3.8|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.2|^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "RefinePhp\\LaravelAiBatch\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RefinePhp\\LaravelAiBatch\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "phpstan analyse",
+        "format": "pint",
+        "format:test": "pint --test",
+        "test": "pest",
+        "test:unit": "pest tests/Unit",
+        "quality": [
+            "@format:test",
+            "@analyse",
+            "@test"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "RefinePhp\\LaravelAiBatch\\LaravelAiBatchServiceProvider"
+            ],
+            "aliases": {
+                "AiBatch": "RefinePhp\\LaravelAiBatch\\Facades\\AiBatch"
+            }
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
