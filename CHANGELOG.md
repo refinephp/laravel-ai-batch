@@ -4,6 +4,8 @@ All notable changes to Laravel AI Batch will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-20
+
 ### Added
 
 - Exact initial-request resolution for native OpenAI agents on `laravel/ai` 0.9.1.

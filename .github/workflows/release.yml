@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic version tag to publish
+        required: true
+        default: v0.1.0
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish ${{ inputs.version }}
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      PACKAGE_REPOSITORY: https://github.com/refinephp/laravel-ai-batch
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate release metadata
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        shell: bash
+        run: |
+          if [[ ! "$RELEASE_VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Version must be a stable semantic version tag such as v0.1.0."
+            exit 1
+          fi
+
+          changelog_version="${RELEASE_VERSION#v}"
+          if ! grep --fixed-strings --quiet "## [$changelog_version]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no release heading for $changelog_version."
+            exit 1
+          fi
+
+          if [[ -z "$PACKAGIST_USERNAME" || -z "$PACKAGIST_TOKEN" ]]; then
+            echo "::error::PACKAGIST_USERNAME and PACKAGIST_TOKEN repository secrets are required."
+            exit 1
+          fi
+
+          existing_commit="$(git rev-list -n 1 "$RELEASE_VERSION" 2>/dev/null || true)"
+          if [[ -n "$existing_commit" && "$existing_commit" != "$GITHUB_SHA" ]]; then
+            echo "::error::Tag $RELEASE_VERSION already points to $existing_commit instead of $GITHUB_SHA."
+            exit 1
+          fi
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Validate package metadata
+        run: composer validate --strict
+
+      - name: Run quality suite
+        run: composer quality
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "$RELEASE_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "GitHub release $RELEASE_VERSION already exists; continuing with Packagist publication."
+          else
+            gh release create "$RELEASE_VERSION" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "$RELEASE_VERSION" \
+              --generate-notes
+          fi
+
+      - name: Trigger Packagist update
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        shell: bash
+        run: |
+          response="$(curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-all-errors \
+            --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer $PACKAGIST_USERNAME:$PACKAGIST_TOKEN" \
+            --request POST \
+            --data "{\"repository\":\"$PACKAGE_REPOSITORY\"}" \
+            https://packagist.org/api/update-package)"
+
+          if [[ "$(jq --raw-output '.status' <<<"$response")" != "success" ]]; then
+            echo "::error::Packagist did not accept the package update."
+            exit 1
+          fi
+
+      - name: Verify Packagist version
+        shell: bash
+        run: |
+          normalized_version="${RELEASE_VERSION#v}"
+
+          for attempt in {1..12}; do
+            package="$(curl \
+              --fail \
+              --silent \
+              --show-error \
+              --retry 3 \
+              --retry-all-errors \
+              https://packagist.org/packages/refinephp/laravel-ai-batch.json)"
+
+            if jq --exit-status \
+              --arg tagged "$RELEASE_VERSION" \
+              --arg normalized "$normalized_version" \
+              '.package.versions[$tagged] // .package.versions[$normalized]' \
+              <<<"$package" >/dev/null; then
+              echo "$RELEASE_VERSION is available on Packagist."
+              exit 0
+            fi
+
+            echo "Waiting for Packagist to index $RELEASE_VERSION (attempt $attempt of 12)."
+            sleep 10
+          done
+
+          echo "::error::$RELEASE_VERSION was not visible on Packagist within two minutes."
+          exit 1
