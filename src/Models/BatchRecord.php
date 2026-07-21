@@ -19,6 +19,15 @@ final class BatchRecord extends Model
 
     protected $guarded = [];
 
+    protected static function booted(): void
+    {
+        static::updated(function (BatchRecord $batch) {
+            if ($batch->isDirty('status')) {
+                event(new \RefinePhp\LaravelAiBatch\Events\BatchStatusUpdated($batch));
+            }
+        });
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {
