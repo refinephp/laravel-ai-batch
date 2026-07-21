@@ -15,6 +15,6 @@ The `Release` GitHub Actions workflow publishes stable semantic-version tags fro
 
 1. Add a matching version heading to `CHANGELOG.md`.
 2. Configure the `PACKAGIST_USERNAME` and `PACKAGIST_TOKEN` repository secrets. A Packagist safe API token is sufficient.
-3. Open **Actions → Release → Run workflow**, leave `main` selected, and enter a tag such as `v0.1.0`.
+3. Open **Actions → Release → Run workflow**, leave `main` selected, and enter a tag such as `v1.2.3`. Do not enter a branch name in the version field.
 
 The workflow validates the package, runs the complete quality suite, creates the GitHub tag and release, requests a Packagist refresh, and verifies that the version is available.

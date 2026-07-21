@@ -4,6 +4,19 @@ All notable changes to Laravel AI Batch will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-21
+
+### Fixed
+
+- Made manual releases fail clearly when dispatched from a tag instead of `main`.
+- Prevented stale Packagist responses from causing false release verification failures.
+
+## [0.1.1] - 2026-07-21
+
+### Added
+
+- Dispatched a `BatchStatusUpdated` event when a persisted batch status changes.
+
 ## [0.1.0] - 2026-07-20
 
 ### Added
