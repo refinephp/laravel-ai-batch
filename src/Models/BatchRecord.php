@@ -6,6 +6,7 @@ namespace RefinePhp\LaravelAiBatch\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use RefinePhp\LaravelAiBatch\Enums\BatchStatus;
+use RefinePhp\LaravelAiBatch\Events\BatchStatusUpdated;
 
 final class BatchRecord extends Model
 {
@@ -21,9 +22,9 @@ final class BatchRecord extends Model
 
     protected static function booted(): void
     {
-        static::updated(function (BatchRecord $batch) {
+        self::updated(function (BatchRecord $batch) {
             if ($batch->isDirty('status')) {
-                event(new \RefinePhp\LaravelAiBatch\Events\BatchStatusUpdated($batch));
+                event(new BatchStatusUpdated($batch));
             }
         });
     }
