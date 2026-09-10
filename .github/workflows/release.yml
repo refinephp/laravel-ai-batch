@@ -52,6 +52,27 @@ jobs:
             exit 1
           fi
 
+          # Extract that version's section so the published release notes carry the
+          # curated summary rather than only auto-generated pull request titles.
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          awk -v heading="## [$changelog_version]" '
+            index($0, heading) == 1 { capture = 1; next }
+            capture && /^## \[/ { exit }
+            capture { lines[++n] = $0 }
+            END {
+              start = 1; while (start <= n && lines[start] ~ /^[[:space:]]*$/) start++
+              end = n;   while (end >= start && lines[end] ~ /^[[:space:]]*$/) end--
+              for (i = start; i <= end; i++) print lines[i]
+            }
+          ' CHANGELOG.md > "$notes_file"
+
+          if [[ ! -s "$notes_file" ]]; then
+            echo "::error::The CHANGELOG.md section for $changelog_version is empty; release notes would carry no summary."
+            exit 1
+          fi
+
+          echo "RELEASE_NOTES_FILE=$notes_file" >> "$GITHUB_ENV"
+
           if [[ -z "$PACKAGIST_USERNAME" || -z "$PACKAGIST_TOKEN" ]]; then
             echo "::error::PACKAGIST_USERNAME and PACKAGIST_TOKEN repository secrets are required."
             exit 1
@@ -89,6 +110,7 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --title "$RELEASE_VERSION" \
+              --notes "$(cat "$RELEASE_NOTES_FILE")" \
               --generate-notes
           fi
 
