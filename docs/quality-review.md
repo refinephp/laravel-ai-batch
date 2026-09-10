@@ -1,6 +1,6 @@
 # Quality and Security Review
 
-This review covers the version-one OpenAI provider, Laravel AI v0.9.1 compatibility adapter, persistence, polling, and public API. The normal test suite uses deterministic HTTP fakes and contains no live credentials or provider calls.
+This review covers the version-one OpenAI provider, Laravel AI compatibility adapter, persistence, polling, and public API. The normal test suite uses deterministic HTTP fakes and contains no live credentials or provider calls.
 
 ## Adversarial cases verified
 
@@ -26,7 +26,7 @@ This review covers the version-one OpenAI provider, Laravel AI v0.9.1 compatibil
 
 ## Residual risks and accepted limitations
 
-- Exact request capture depends on protected Laravel AI v0.9.1 behavior. Composer, runtime, reflection, and parity checks intentionally prevent an unsupported version from running silently.
+- Exact request capture depends on protected Laravel AI behavior. Composer bounds, a runtime structural signature guard, reflection tests, and parity checks intentionally prevent an unsupported version from running silently.
 - OpenAI upload and batch creation have no package-assumed idempotency key. Ambiguous side effects require operator reconciliation.
 - Results are lazy and may yield earlier records before a later malformed or missing record is discovered. Application result handlers must be idempotent.
 - The package serializes initial tool definitions but does not execute asynchronous Laravel-side tool, approval, MCP, or conversation-storage continuations.

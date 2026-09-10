@@ -10,10 +10,10 @@ Laravel AI Batch lets an existing [Laravel AI](https://laravel.com/docs/13.x/ai-
 
 - PHP 8.3 or newer
 - Laravel 12 or 13
-- `laravel/ai` 0.9.1 exactly
+- `laravel/ai` 0.9.0 or newer, below 0.12
 - A native OpenAI provider connection using `https://api.openai.com/v1`
 
-The exact Laravel AI pin is intentional. Laravel AI does not currently expose a public resolved-request API, so this package isolates and tests one protected v0.9.1 integration point. See [Compatibility](docs/compatibility.md) for the policy and risks.
+The bounded Laravel AI constraint is intentional. Laravel AI does not currently expose a public resolved-request API, so this package isolates and tests one protected integration point and verifies its signature at runtime. The upper bound is raised only after that surface is re-verified against a new minor. See [Compatibility](docs/compatibility.md) for the policy and risks.
 
 ## Installation
 

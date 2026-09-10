@@ -2,6 +2,8 @@
 
 Research completed: 2026-07-19
 
+> **Superseded in part.** This document is a dated research snapshot taken against `laravel/ai` v0.9.1. Its dependency-constraint recommendations no longer describe the package: the supported range is now `>=0.9.0 <0.12`, enforced by a structural signature guard rather than an exact version check. See [`compatibility.md`](compatibility.md) for the current policy. The upstream findings below are retained as the original evidence.
+
 This document records the evidence used to select the version-one architecture. Detailed workstream notes remain in [`research-laravel-ai.md`](research-laravel-ai.md), [`research-openai.md`](research-openai.md), and [`research-package-conventions.md`](research-package-conventions.md).
 
 ## Sources and versions

@@ -4,6 +4,20 @@ All notable changes to Laravel AI Batch will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Support for `laravel/ai` 0.9.0, 0.10.x, and 0.11.x alongside 0.9.1.
+- A structural compatibility guard that asserts the Laravel AI request building
+  signatures this package drives, replacing the exact installed-version check.
+  Parameters that Laravel AI appends with defaults are tolerated; a rename,
+  reorder, or newly required parameter fails with an actionable message.
+- A `laravel/ai` CI job covering each supported minor version.
+
+### Changed
+
+- Widened the `laravel/ai` constraint from `0.9.1` to `>=0.9.0 <0.12`. 0.9.0 is the hard
+  floor: earlier releases predate the step-based generation architecture the adapter hooks.
+
 ## [0.1.2] - 2026-07-21
 
 ### Fixed

@@ -2,6 +2,8 @@
 
 Checked: 2026-07-19
 
+> **Superseded in part.** This document is a dated research snapshot taken against `laravel/ai` v0.9.1. Its dependency-constraint recommendations no longer describe the package: the supported range is now `>=0.9.0 <0.12`, enforced by a structural signature guard rather than an exact version check. See [`compatibility.md`](compatibility.md) for the current policy. The upstream findings below are retained as the original evidence.
+
 ## Sources inspected
 
 - [`laravel/ai` `0.x` at `a1b3ce7`](https://github.com/laravel/ai/tree/a1b3ce7437adb8bda22eb4e0308a376cd64da3d9)

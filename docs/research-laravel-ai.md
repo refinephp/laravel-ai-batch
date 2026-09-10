@@ -2,6 +2,8 @@
 
 Research date: 2026-07-19
 
+> **Superseded in part.** This document is a dated research snapshot taken against `laravel/ai` v0.9.1. Its dependency-constraint recommendations no longer describe the package: the supported range is now `>=0.9.0 <0.12`, enforced by a structural signature guard rather than an exact version check. See [`compatibility.md`](compatibility.md) for the current policy. The upstream findings below are retained as the original evidence.
+
 This document covers the Laravel AI side of request resolution for Laravel AI Batch. It deliberately does not specify the OpenAI Batch lifecycle, limits, or status model; those belong in the OpenAI-specific research.
 
 ## Source snapshot

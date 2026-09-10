@@ -25,8 +25,11 @@ use ReflectionMethod;
 use Throwable;
 
 /**
- * Resolves the initial provider request through Laravel AI v0.9.1's native
- * OpenAI request builder without allowing the provider transport to run.
+ * Resolves the initial provider request through Laravel AI's native OpenAI
+ * request builder without allowing the provider transport to run.
+ *
+ * The request building surface this drives is not public Laravel AI API, so
+ * {@see LaravelAiVersion::assertSupported()} verifies its shape before use.
  */
 final class LaravelAiRequestResolver implements RequestResolver
 {
