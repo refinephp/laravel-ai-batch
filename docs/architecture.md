@@ -79,7 +79,7 @@ Results are not persisted. `results()` lazily combines successful output-file an
 
 ## Request resolution
 
-The v0.9.1 adapter:
+The Laravel AI adapter:
 
 1. Resolves and validates a single native OpenAI connection.
 2. Resolves explicit/method/attribute/default model precedence.
@@ -125,10 +125,10 @@ Exception context may include safe local/provider IDs, operation, HTTP status, p
 
 ## Compatibility policy
 
-- Composer pins Laravel AI v0.9.1 exactly.
+- Composer bounds Laravel AI to `>=0.9.0 <0.12`.
 - Public APIs never expose Laravel AI gateway/orchestration internals.
-- CI covers supported PHP and Laravel combinations plus the fixed Laravel AI version.
-- Contract tests fail clearly when protected signatures change.
+- CI covers supported PHP and Laravel combinations plus every supported Laravel AI minor version.
+- A runtime structural guard and contract tests fail clearly when the protected signatures this package drives are renamed, reordered, or given a new required parameter.
 - Payload-parity tests compare the resolver with the actual synchronous request for every supported feature family.
 - Compatibility expands only when those tests pass for a deliberate new adapter/version range.
 

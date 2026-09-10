@@ -31,3 +31,24 @@ jobs:
           coverage: none
       - run: composer update --prefer-dist --no-interaction --no-progress --with="illuminate/contracts=^${{ matrix.laravel }}"
       - run: composer test
+
+  laravel-ai:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # The exact supported floor, then the newest release of each supported minor.
+        ai: ['0.9.0', '0.9.*', '0.10.*', '0.11.*']
+
+    name: laravel/ai ${{ matrix.ai }}
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: composer update --prefer-dist --no-interaction --no-progress --with="laravel/ai=${{ matrix.ai }}"
+      - run: composer test

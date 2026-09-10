@@ -12,7 +12,7 @@ use Laravel\Ai\Gateway\TextGenerationOptions;
 use LogicException;
 
 /**
- * Laravel AI v0.9.1 compatibility gateway.
+ * Captures the initial Laravel AI OpenAI request body instead of sending it.
  *
  * @internal
  */
