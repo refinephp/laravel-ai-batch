@@ -4,6 +4,16 @@ All notable changes to Laravel AI Batch will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-18
+
+### Fixed
+
+- Stopped `uploadBatchInput()` closing the batch input stream a second time. The HTTP client
+  takes ownership of a resource passed to `attach()` and closes it when the request objects are
+  released, so the `finally` block raised `TypeError: fclose(): Argument #1 ($stream) must be an
+  open stream resource` wherever that release happened before the block ran. The stream is now
+  closed only while it is still open, which still covers the path where the request never left.
+
 ## [0.2.0] - 2026-09-10
 
 ### Added

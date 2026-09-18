@@ -81,3 +81,24 @@ it('throws a safe structured transport exception for provider errors', function 
 
     Http::assertSentCount(1);
 });
+
+it('does not fail when the http client already closed the stream it was handed', function () {
+    Http::fake(function (Request $request) {
+        foreach ($request->data() as $part) {
+            if (is_resource($part['contents'] ?? null)) {
+                fclose($part['contents']);
+            }
+        }
+
+        return Http::response(['id' => 'file-input'], 200);
+    });
+
+    $path = tempnam(sys_get_temp_dir(), 'openai-client-test-');
+    file_put_contents($path, "{}\n");
+
+    try {
+        expect(openAiClient()->uploadBatchInput($path, 'input.jsonl')['id'])->toBe('file-input');
+    } finally {
+        @unlink($path);
+    }
+});
