@@ -49,7 +49,10 @@ final class OpenAiBatchClient
                     ->post('/files', ['purpose' => 'batch']),
             );
         } finally {
-            fclose($stream);
+            // The HTTP client closes the stream it was handed, so this is the second close
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
         }
     }
 
