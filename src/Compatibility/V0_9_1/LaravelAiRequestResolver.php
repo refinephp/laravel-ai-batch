@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RefinePhp\LaravelAiBatch\Compatibility\V0_9_1;
 
+use Closure;
 use Illuminate\Contracts\Events\Dispatcher;
 use Laravel\Ai\AiManager;
 use Laravel\Ai\Attributes\Model as ModelAttribute;
@@ -11,6 +12,7 @@ use Laravel\Ai\Attributes\Timeout as TimeoutAttribute;
 use Laravel\Ai\Attributes\UseCheapestModel;
 use Laravel\Ai\Attributes\UseSmartestModel;
 use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\Providers\TextProvider;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Prompts\AgentPrompt;
@@ -21,7 +23,13 @@ use RefinePhp\LaravelAiBatch\Data\ResolvedProviderRequest;
 use RefinePhp\LaravelAiBatch\Exceptions\RequestResolutionException;
 use RefinePhp\LaravelAiBatch\Exceptions\UnsupportedBatchFeatureException;
 use ReflectionClass;
+use ReflectionFunction;
+use ReflectionFunctionAbstract;
+use ReflectionIntersectionType;
 use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
 use Throwable;
 
 /**
@@ -69,6 +77,7 @@ final class LaravelAiRequestResolver implements RequestResolver
         try {
             $resolvedModel = $this->resolveModel($agent, $nativeProvider, $model);
             $timeout = $this->resolveTimeout($agent);
+            $this->assertMiddlewareAcceptsInstalledInput($agent);
         } catch (RequestResolutionException $exception) {
             throw $exception;
         } catch (Throwable) {
@@ -176,6 +185,81 @@ final class LaravelAiRequestResolver implements RequestResolver
         }
 
         return $timeout;
+    }
+
+    /**
+     * Reject agent middleware written for the other Laravel AI middleware contract.
+     *
+     * Such middleware raises a type error inside Laravel AI's pipeline, which the
+     * resolver would otherwise report only as a generic resolution failure.
+     */
+    private function assertMiddlewareAcceptsInstalledInput(Agent $agent): void
+    {
+        if (! $agent instanceof HasMiddleware) {
+            return;
+        }
+
+        $input = LaravelAiVersion::middlewareInput();
+
+        foreach ($agent->middleware() as $middleware) {
+            $handler = match (true) {
+                $middleware instanceof Closure => new ReflectionFunction($middleware),
+                (is_object($middleware) || (is_string($middleware) && class_exists($middleware)))
+                    && method_exists($middleware, 'handle') => new ReflectionMethod($middleware, 'handle'),
+                default => null,
+            };
+
+            if ($handler === null || $this->acceptsInput($handler, $input)) {
+                continue;
+            }
+
+            throw new RequestResolutionException(sprintf(
+                'Agent middleware [%s] does not accept [%s], which the installed Laravel AI release passes to '.
+                'agent middleware. Update the middleware for the installed Laravel AI release.',
+                $middleware instanceof Closure ? 'Closure' : (is_object($middleware) ? $middleware::class : $middleware),
+                $input,
+            ));
+        }
+    }
+
+    /** @param class-string $input */
+    private function acceptsInput(ReflectionFunctionAbstract $handler, string $input): bool
+    {
+        $type = ($handler->getParameters()[0] ?? null)?->getType();
+
+        return $type === null || $this->typeAccepts($type, $input);
+    }
+
+    /** @param class-string $input */
+    private function typeAccepts(ReflectionType $type, string $input): bool
+    {
+        if ($type instanceof ReflectionUnionType) {
+            foreach ($type->getTypes() as $member) {
+                if ($this->typeAccepts($member, $input)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($type instanceof ReflectionIntersectionType) {
+            foreach ($type->getTypes() as $member) {
+                if (! $this->typeAccepts($member, $input)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if (! $type instanceof ReflectionNamedType) {
+            return true;
+        }
+
+        return $type->isBuiltin()
+            ? in_array($type->getName(), ['mixed', 'object'], true)
+            : is_a($input, $type->getName(), true);
     }
 
     private function invokeAgentMethod(Agent $agent, string $method): mixed

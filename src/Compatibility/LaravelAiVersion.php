@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace RefinePhp\LaravelAiBatch\Compatibility;
 
 use Laravel\Ai\Gateway\OpenAi\OpenAiGateway;
+use Laravel\Ai\PendingStep;
 use Laravel\Ai\Prompts\AgentPrompt;
 use RefinePhp\LaravelAiBatch\Exceptions\UnsupportedLaravelAiVersionException;
 use ReflectionMethod;
@@ -15,8 +16,8 @@ use Throwable;
  * Asserts that the installed Laravel AI release still exposes the internal
  * request building surface that batch request resolution drives.
  *
- * Laravel AI is pre-1.0 and neither `OpenAiGateway::buildStepBody()` nor
- * `AgentPrompt::__construct()` is public API, so their shape is asserted
+ * Neither `OpenAiGateway::buildStepBody()` nor `AgentPrompt::__construct()`
+ * is public Laravel AI API, so their shape is asserted
  * structurally instead of pinning one exact version. Parameters appended with
  * defaults are tolerated, because the resolver only passes the leading
  * parameters positionally. A rename, a reorder, or a new required parameter is
@@ -71,6 +72,21 @@ final class LaravelAiVersion
         self::assertLeadingParameters(AgentPrompt::class, '__construct', self::AGENT_PROMPT_PARAMETERS);
 
         self::$supported = true;
+    }
+
+    /**
+     * The value the installed Laravel AI release passes to agent middleware.
+     *
+     * Laravel AI 1.0 moved agent middleware from the whole run to each generation
+     * step, so middleware receives a `PendingStep` instead of an `AgentPrompt`.
+     *
+     * @return class-string
+     *
+     * @internal
+     */
+    public static function middlewareInput(): string
+    {
+        return class_exists(PendingStep::class) ? PendingStep::class : AgentPrompt::class;
     }
 
     /**

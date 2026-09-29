@@ -125,7 +125,7 @@ Exception context may include safe local/provider IDs, operation, HTTP status, p
 
 ## Compatibility policy
 
-- Composer bounds Laravel AI to `>=0.9.0 <0.12`.
+- Composer bounds Laravel AI to `>=0.9.0 <1.1`.
 - Public APIs never expose Laravel AI gateway/orchestration internals.
 - CI covers supported PHP and Laravel combinations plus every supported Laravel AI minor version.
 - A runtime structural guard and contract tests fail clearly when the protected signatures this package drives are renamed, reordered, or given a new required parameter.
