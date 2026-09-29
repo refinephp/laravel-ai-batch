@@ -4,6 +4,8 @@ All notable changes to Laravel AI Batch will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-29
+
 ### Added
 
 - Support for `laravel/ai` 1.0.x alongside 0.9.0 through 0.11.x.
