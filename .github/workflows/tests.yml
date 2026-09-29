@@ -38,7 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         # The exact supported floor, then the newest release of each supported minor.
-        ai: ['0.9.0', '0.9.*', '0.10.*', '0.11.*']
+        ai: ['0.9.0', '0.9.*', '0.10.*', '0.11.*', '1.0.*']
 
     name: laravel/ai ${{ matrix.ai }}
 

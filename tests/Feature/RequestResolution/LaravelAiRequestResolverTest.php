@@ -8,17 +8,45 @@ use Laravel\Ai\Ai;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Files\Base64Document;
 use Laravel\Ai\Gateway\OpenAi\OpenAiGateway;
+use Laravel\Ai\PendingStep;
+use Laravel\Ai\Prompts\AgentPrompt;
 use Laravel\Ai\Providers\OpenAiProvider;
+use RefinePhp\LaravelAiBatch\Compatibility\LaravelAiVersion;
 use RefinePhp\LaravelAiBatch\Contracts\RequestResolver;
 use RefinePhp\LaravelAiBatch\Exceptions\RequestResolutionException;
 use RefinePhp\LaravelAiBatch\Exceptions\UnsupportedBatchFeatureException;
 use RefinePhp\LaravelAiBatch\Tests\Fixtures\Agents\ParityAgent;
 use RefinePhp\LaravelAiBatch\Tests\Fixtures\Middleware\RevisePrompt;
+use RefinePhp\LaravelAiBatch\Tests\Fixtures\Middleware\ReviseStep;
 use RefinePhp\LaravelAiBatch\Tests\Fixtures\Middleware\ShortCircuit;
+use RefinePhp\LaravelAiBatch\Tests\Fixtures\Middleware\ShortCircuitStep;
 
 function requestResolver(): RequestResolver
 {
     return app(RequestResolver::class);
+}
+
+/**
+ * Laravel AI 1.0 passes a PendingStep to agent middleware; earlier releases pass an AgentPrompt.
+ */
+function usesStepMiddleware(): bool
+{
+    return LaravelAiVersion::middlewareInput() === PendingStep::class;
+}
+
+function revisingMiddleware(): object
+{
+    return usesStepMiddleware() ? new ReviseStep : new RevisePrompt;
+}
+
+function shortCircuitingMiddleware(): object
+{
+    return usesStepMiddleware() ? new ShortCircuitStep : new ShortCircuit;
+}
+
+function middlewareForOtherRelease(): object
+{
+    return usesStepMiddleware() ? new RevisePrompt : new ReviseStep;
 }
 
 /** @return array<string, mixed> */
@@ -46,7 +74,7 @@ function successfulOpenAiResponse(): array
 test('captures the exact initial OpenAI request without transport', function () {
     Http::preventStrayRequests();
 
-    $agent = new ParityAgent([new RevisePrompt]);
+    $agent = new ParityAgent([revisingMiddleware()]);
     $attachments = [new Base64Document(base64_encode('fixture document'), 'text/plain')];
 
     $resolved = requestResolver()->resolve(
@@ -137,11 +165,51 @@ test('rejects middleware that short circuits before the provider request', funct
     Http::preventStrayRequests();
 
     expect(fn () => requestResolver()->resolve(
-        new ParityAgent([new ShortCircuit]),
+        new ParityAgent([shortCircuitingMiddleware()]),
         'Prompt',
         'openai',
     ))->toThrow(RequestResolutionException::class, 'short-circuiting middleware');
 
+    Http::assertNothingSent();
+});
+
+test('rejects middleware written for the other Laravel AI middleware contract', function () {
+    Http::preventStrayRequests();
+
+    $middleware = middlewareForOtherRelease();
+
+    expect(fn () => requestResolver()->resolve(
+        new ParityAgent([$middleware]),
+        'Prompt',
+        'openai',
+    ))->toThrow(RequestResolutionException::class, sprintf(
+        'Agent middleware [%s] does not accept [%s]',
+        $middleware::class,
+        LaravelAiVersion::middlewareInput(),
+    ));
+
+    Http::assertNothingSent();
+});
+
+test('rejects closure middleware typed for the other Laravel AI middleware contract', function () {
+    $middleware = usesStepMiddleware()
+        ? fn (AgentPrompt $prompt, Closure $next) => $next($prompt)
+        : fn (PendingStep $step, Closure $next) => $next($step);
+
+    expect(fn () => requestResolver()->resolve(new ParityAgent([$middleware]), 'Prompt', 'openai'))
+        ->toThrow(RequestResolutionException::class, 'Agent middleware [Closure] does not accept');
+});
+
+test('accepts untyped and loosely typed middleware', function () {
+    Http::preventStrayRequests();
+
+    $resolved = requestResolver()->resolve(new ParityAgent([
+        fn ($input, Closure $next) => $next($input),
+        fn (object $input, Closure $next) => $next($input),
+        fn (mixed $input, Closure $next) => $next($input),
+    ]), 'Prompt', 'openai');
+
+    expect($resolved->body()['model'])->toBe('gpt-5.4-mini');
     Http::assertNothingSent();
 });
 

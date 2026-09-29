@@ -4,6 +4,22 @@ All notable changes to Laravel AI Batch will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Support for `laravel/ai` 1.0.x alongside 0.9.0 through 0.11.x.
+- A `laravel/ai` 1.0.x CI job.
+- An explicit `RequestResolutionException` when agent middleware does not accept the value the
+  installed Laravel AI release passes to middleware. Laravel AI 1.0 passes a `PendingStep` where
+  earlier releases passed an `AgentPrompt`. Before, this failed as a generic resolution error that
+  hid the underlying `TypeError`.
+
+### Changed
+
+- Widened the `laravel/ai` constraint from `>=0.9.0 <0.12` to `>=0.9.0 <1.1`.
+- Laravel AI 1.0 runs agent middleware around each generation step, and middleware now receives a
+  `Laravel\Ai\PendingStep`. Middleware written for 0.x must be updated before resolving requests
+  under 1.0. See [Compatibility](docs/compatibility.md#agent-middleware).
+
 ## [0.2.1] - 2026-09-18
 
 ### Fixed
